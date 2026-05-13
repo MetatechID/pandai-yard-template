@@ -1,0 +1,108 @@
+# Local development stack for Nusantara Logistics.
+#
+# This is the "everything on one laptop" rig. It is NOT what runs in production.
+# Production is whatever ansible decides on titan-prod-01. See infrastructure/deployment/titan-prod.md.
+#
+# Known issues (as of last time anyone fully ran this end-to-end):
+#   - backend-legacy needs a PHP 7.4 base image, which is EOL. We pin a mirror.
+#   - alembic migrations sometimes fail on first boot because the legacy schema
+#     loader (sql/schema.sql) races with the modern migration. Workaround:
+#     `docker compose up postgres` first, wait, then `docker compose up`.
+#   - The Oracle compatibility layer in backend-legacy is stubbed locally — see
+#     docs/04-the-oracle-migration.md.
+#
+# If you are reading this in 2026 and wondering "why is the legacy PHP still here":
+# read docs/adrs/0001-why-php-still.md before opening a refactor PR.
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: nusantara-postgres
+    environment:
+      POSTGRES_DB: nusantara
+      POSTGRES_USER: nusantara
+      POSTGRES_PASSWORD: nusantara_dev_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend-legacy/sql/schema.sql:/docker-entrypoint-initdb.d/00-legacy-schema.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    container_name: nusantara-redis
+    ports:
+      - "6379:6379"
+
+  backend-legacy:
+    # PHP 7.4 + apache. EOL upstream; we pull from internal mirror.
+    # TODO(2024-Q3): bump to 8.1 once we've audited the Oracle adapter. Still TODO.
+    build:
+      context: ./backend-legacy
+    container_name: nusantara-legacy
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_NAME: nusantara
+      DB_USER: nusantara
+      DB_PASS: nusantara_dev_only
+      ORACLE_FALLBACK: "false"   # set true if you have the oci8 driver locally; almost nobody does
+    ports:
+      - "8001:80"
+
+  backend-modern:
+    build:
+      context: ./backend-modern
+    container_name: nusantara-modern
+    depends_on:
+      - postgres
+      - redis
+      - backend-legacy
+    environment:
+      DATABASE_URL: postgresql://nusantara:nusantara_dev_only@postgres:5432/nusantara
+      REDIS_URL: redis://redis:6379/0
+      LEGACY_BASE_URL: http://backend-legacy:80
+    ports:
+      - "8002:8000"
+
+  frontend-customer-portal:
+    build:
+      context: ./frontend-customer-portal
+    container_name: nusantara-portal
+    depends_on:
+      - backend-modern
+    environment:
+      NEXT_PUBLIC_API_BASE: http://localhost:8080/api
+    ports:
+      - "3000:3000"
+
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+    container_name: nusantara-admin
+    depends_on:
+      - backend-modern
+      - backend-legacy
+    environment:
+      REACT_APP_API_BASE: http://localhost:8080
+    ports:
+      - "3001:3000"
+
+  nginx:
+    image: nginx:1.25
+    container_name: nusantara-nginx
+    depends_on:
+      - backend-legacy
+      - backend-modern
+      - frontend-customer-portal
+      - frontend-admin
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infrastructure/nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  postgres-data:

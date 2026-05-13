@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "nusantara-pipelines"
+version = "0.3.4"
+description = "PT Nusantara Logistics — analytics ETL pipelines."
+authors = ["BI Team <bi@nusantara.example>"]
+license = "Proprietary"
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+sqlalchemy = "^2.0.27"
+psycopg2-binary = "^2.9.9"
+pandas = "^2.2.0"
+pyarrow = "^15.0.0"
+click = "^8.1.7"
+structlog = "^24.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+ruff = "^0.3.0"
+
+[tool.poetry.scripts]
+shipment-etl = "shipment_etl:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

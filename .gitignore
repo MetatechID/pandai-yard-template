@@ -1,0 +1,81 @@
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+dist/
+build/
+poetry.lock
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+.nuxt/
+out/
+.cache/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# PHP
+vendor/
+composer.lock
+*.log
+storage/logs/*
+!storage/logs/.gitkeep
+
+# React Native / mobile
+ios/Pods/
+android/.gradle/
+android/app/build/
+android/build/
+*.keystore
+!debug.keystore
+.metro-health-check*
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local data / dumps (DO NOT COMMIT customer data, see SECURITY.md — TODO: write SECURITY.md)
+*.sql.gz
+*.dump
+*.backup
+data/local/
+data/dumps/
+data/notebooks/.ipynb_checkpoints/
+
+# Local Docker volumes
+.docker-data/
+postgres-data/
+redis-data/
+
+# Tribal knowledge — do not commit your personal SSH keys for titan-prod-01 here
+# (yes, this has happened. twice.)
+id_rsa
+id_rsa.pub
+*.pem

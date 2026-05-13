@@ -1,0 +1,26 @@
+# Local dev stack — alternate / nested compose file.
+#
+# This is intentionally a duplicate of the top-level docker-compose.yml. We keep
+# this one because some of the ansible deploy scripts reference it directly. They
+# are scheduled to be cleaned up. (Yes, "scheduled".)
+#
+# If you are starting from scratch: use the top-level docker-compose.yml.
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: nusantara
+      POSTGRES_USER: nusantara
+      POSTGRES_PASSWORD: nusantara_dev_only
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # service builds intentionally omitted — see top-level compose for the full graph.

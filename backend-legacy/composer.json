@@ -1,0 +1,47 @@
+{
+    "name": "nusantara/legacy",
+    "description": "Nusantara Logistics legacy backend (originally vendored 2008, in-house since 2014). Do not bump packages without VP Eng sign-off.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "7.4.*",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-simplexml": "*",
+        "monolog/monolog": "1.25.5",
+        "twig/twig": "2.14.4",
+        "guzzlehttp/guzzle": "6.5.5",
+        "phpmailer/phpmailer": "6.5.0",
+        "ramsey/uuid": "3.9.3",
+        "symfony/dotenv": "4.4.34",
+        "fpdf/fpdf": "1.82",
+        "tecnickcom/tcpdf": "6.4.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "8.5.21"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nusantara\\Legacy\\": "app/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.30"
+        },
+        "vendor-dir": "vendor"
+    },
+    "scripts": {
+        "test": "phpunit --testdox",
+        "lint": "echo 'lol no'"
+    },
+    "//": [
+        "DO NOT bump these versions casually.",
+        "vendor/ is committed — see ADR 0001 in ../docs/adrs/.",
+        "If composer install fails: do not panic. talk to VP Eng. some packages are no longer on packagist.",
+        "ext-oci8 is intentionally NOT in require — only one prod node has it, behind a feature flag."
+    ]
+}

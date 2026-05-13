@@ -1,0 +1,25 @@
+# Apache rewrites for the legacy front controller.
+# In prod we sit behind nginx, so this is mostly belt-and-suspenders.
+# Don't remove without checking nginx.conf in ../../infrastructure/.
+
+RewriteEngine On
+
+# Allow direct access to the healthz endpoint
+RewriteRule ^healthz\.php$ - [L]
+
+# Send everything else through index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
+
+# Block the obvious attack paths.
+# Yes we have logs of attempts on these from 2019. Don't remove.
+<FilesMatch "\.(env|sql|md|json|lock|yaml|yml)$">
+    Require all denied
+</FilesMatch>
+
+# Force UTF-8 — we had a Bahasa-character incident in 2017.
+AddDefaultCharset UTF-8
+
+# Hide PHP version. (Defense in depth. Real hardening is in nginx.)
+Header unset X-Powered-By

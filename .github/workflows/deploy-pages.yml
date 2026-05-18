@@ -1,0 +1,70 @@
+# Nusantara customer-portal → GitHub Pages preview.
+#
+# Builds frontend-customer-portal as a fully static export and publishes it
+# so you can SEE the app you're building at:
+#   https://<your-username>.github.io/<this-repo>/
+#
+# Runs automatically on every push to main (so a merged PR updates the
+# preview), and can be triggered by hand from the Actions tab
+# ("Run workflow" — the on-demand button).
+#
+# No backend in this build: the tracking pages render bundled demo
+# shipments (try NL104821, NL900277, NL550133). The point is to see the
+# UI/UX target, not live data.
+
+name: Deploy preview to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; let an in-progress run finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Self-enables Pages (Actions source) via the workflow token — no repo
+      # setting or admin needed for the student.
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Build static export
+        working-directory: frontend-customer-portal
+        env:
+          NEXT_PUBLIC_STATIC_EXPORT: '1'
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          test -d out || (echo "::error::next export produced no out/ dir" && exit 1)
+          touch out/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend-customer-portal/out
+
+      - name: Deploy
+        id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,19 +1,25 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 /**
  * Landing page — the AWB tracker form.
  *
- * The "form" is a server-action style POST that reads the awb and bounces to
- * /tracking/[awb]. Keeps the URL clean for sharing.
+ * Client component: navigates to /tracking/[awb] on submit. (Was a Server
+ * Action; converted so the portal can also build as a fully static export
+ * for the per-student GitHub Pages preview. Runtime behaviour is identical.)
  */
 export default function HomePage() {
-  async function lookup(formData: FormData) {
-    'use server';
-    const raw = String(formData.get('awb') ?? '').trim().toUpperCase();
+  const router = useRouter();
+  const [awb, setAwb] = useState('');
+
+  function lookup(e: React.FormEvent) {
+    e.preventDefault();
     // We DO NOT auto-correct O→0 / I→1. See Bu Sari's note in /docs/00-WELCOME.
-    // We also don't 400 here; the API will tell us if it's malformed.
+    const raw = awb.trim().toUpperCase();
     if (raw) {
-      redirect(`/tracking/${encodeURIComponent(raw)}`);
+      router.push(`/tracking/${encodeURIComponent(raw)}`);
     }
   }
 
@@ -26,11 +32,13 @@ export default function HomePage() {
         Track your shipment. Masukkan nomor resi (AWB) di bawah ini.
       </p>
 
-      <form action={lookup} style={{ display: 'flex', gap: 8, maxWidth: 480 }}>
+      <form onSubmit={lookup} style={{ display: 'flex', gap: 8, maxWidth: 480 }}>
         <input
           name="awb"
           required
           autoFocus
+          value={awb}
+          onChange={(e) => setAwb(e.target.value)}
           placeholder="Nomor resi / AWB number"
           aria-label="Nomor resi / AWB"
           style={{

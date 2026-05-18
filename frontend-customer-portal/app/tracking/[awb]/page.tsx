@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { TrackingTimeline, type TrackingViewModel } from '../../../components/TrackingTimeline';
+import { DEMO_TRACKING, DEMO_AWBS } from './demo-data';
 
 type PageProps = {
   params: { awb: string };
@@ -8,16 +9,24 @@ type PageProps = {
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8002/api';
 
+// Set to '1' by the GitHub Pages export build (next.config.mjs). In that
+// mode there is no backend, so we serve bundled demo shipments instead.
+const STATIC_EXPORT = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
+
 /**
  * AWB tracking page.
  *
  * Server component — fetches from the modern backend (which itself may fall back to
- * the legacy for shipments older than 18 months).
- *
- * Cache: ISR with a 30-second revalidate. The cache rewarm cron (top-200-yesterday)
- * keeps hot AWBs warm post-deploy.
+ * the legacy for shipments older than 18 months). In the static-export build it
+ * pre-renders the bundled demo AWBs instead (no backend at build time).
  */
-export const revalidate = 30;
+// Pre-render the demo AWBs (required for `output: 'export'` on a dynamic
+// segment; harmless for the normal SSR build).
+export async function generateStaticParams() {
+  return DEMO_AWBS.map((awb) => ({ awb }));
+}
+// In export mode only these params exist. In SSR mode any AWB works.
+export const dynamicParams = !STATIC_EXPORT;
 
 export default async function TrackingPage({ params }: PageProps) {
   const awb = decodeURIComponent(params.awb).toUpperCase();
@@ -71,6 +80,10 @@ export default async function TrackingPage({ params }: PageProps) {
 }
 
 async function fetchTracking(awb: string): Promise<TrackingViewModel | null> {
+  // Static export (GitHub Pages preview): no backend — serve bundled demo.
+  if (STATIC_EXPORT) {
+    return DEMO_TRACKING[awb] ?? null;
+  }
   try {
     const res = await fetch(`${API_BASE}/tracking/${encodeURIComponent(awb)}`, {
       // Don't cache at the fetch layer — the page itself is ISR'd.
